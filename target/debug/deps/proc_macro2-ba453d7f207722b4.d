@@ -1,0 +1,12 @@
+/home/dubs/frontier-work/frontier-starkley/target/debug/deps/proc_macro2-ba453d7f207722b4.rmeta: /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/lib.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/marker.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/parse.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/detection.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/fallback.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/wrapper.rs
+
+/home/dubs/frontier-work/frontier-starkley/target/debug/deps/libproc_macro2-ba453d7f207722b4.rlib: /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/lib.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/marker.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/parse.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/detection.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/fallback.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/wrapper.rs
+
+/home/dubs/frontier-work/frontier-starkley/target/debug/deps/proc_macro2-ba453d7f207722b4.d: /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/lib.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/marker.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/parse.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/detection.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/fallback.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/wrapper.rs
+
+/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/lib.rs:
+/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/marker.rs:
+/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/parse.rs:
+/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/detection.rs:
+/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/fallback.rs:
+/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.27/src/wrapper.rs:
