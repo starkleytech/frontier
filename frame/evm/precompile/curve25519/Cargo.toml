@@ -15,7 +15,7 @@ sp-io = { version = "3.0.0", default-features = false, git = "https://github.com
 frame-support = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", tag = "v3.0.0" }
 pallet-evm = { version = "4.0.0-starkley", default-features = false, path = "../.." }
 fp-evm = { version = "2.0.0-starkley", default-features = false, path = "../../../../primitives/evm" }
-evm = { git = "https://github.com/rust-blockchain/evm.git", tag = "evm-core-v0.26.1", default-features = false, features = ["with-codec"] }
+evm = { version = "0.30.0", default-features = false, features = ["with-codec"] }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
 
 [dependencies.curve25519-dalek]
