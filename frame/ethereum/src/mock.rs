@@ -19,10 +19,9 @@
 
 use super::*;
 use crate::{Module, Config, IntermediateStateRoot};
-use crate as eth_module;
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{
-	parameter_types, ConsensusEngineId
+	impl_outer_origin, parameter_types, ConsensusEngineId
 };
 use pallet_evm::{FeeCalculator, AddressMapping, EnsureAddressTruncated};
 use rlp::*;
@@ -69,7 +68,7 @@ impl frame_system::Config for Test {
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
-	type Call = Call;
+	type Call = ();
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
@@ -144,10 +143,6 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))
 	}
-
-	fn to_evm_address(account_id: &AccountId32) -> Option<H160> {
-		None
-	}
 }
 
 impl pallet_evm::Config for Test {
@@ -160,7 +155,6 @@ impl pallet_evm::Config for Test {
 	type Event = ();
 	type Precompiles = ();
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type BanlistChecker = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = ();
@@ -172,26 +166,10 @@ impl Config for Test {
 	type StateRoot = IntermediateStateRoot;
 }
 
-//pub type System = frame_system::Module<Test>;
-//pub type Balances = pallet_balances::Module<Test>;
-//pub type Ethereum = Module<Test>;
-//pub type Evm = pallet_evm::Module<Test>;
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
-
-frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		System: frame_system::{Module, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		Ethereum: eth_module::{Module, Call, Storage, Config, Event, ValidateUnsigned },
-		Evm: pallet_evm::{Module, Call, Storage, Config, Event<T>},
-	}
-);
-
+pub type System = frame_system::Module<Test>;
+pub type Balances = pallet_balances::Module<Test>;
+pub type Ethereum = Module<Test>;
+pub type Evm = pallet_evm::Module<Test>;
 
 pub struct AccountInfo {
 	pub address: H160,

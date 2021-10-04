@@ -19,18 +19,40 @@
 
 use super::*;
 
-use crate as pallet_evm;
-
+use std::{str::FromStr, collections::BTreeMap};
 use frame_support::{
-	assert_ok, impl_outer_dispatch, impl_outer_origin, parameter_types, traits::GenesisBuild,
+	assert_ok, impl_outer_origin, parameter_types, impl_outer_dispatch,
 };
 use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use std::{collections::BTreeMap, str::FromStr};
 
+impl_outer_origin! {
+	pub enum Origin for Test where system = frame_system {}
+}
+
+impl_outer_dispatch! {
+	pub enum OuterCall for Test where origin: Origin {
+		self::EVM,
+	}
+}
+
+pub struct PalletInfo;
+
+impl frame_support::traits::PalletInfo for PalletInfo {
+	fn index<P: 'static>() -> Option<usize> {
+		return Some(0)
+	}
+
+	fn name<P: 'static>() -> Option<&'static str> {
+		return Some("TestName")
+	}
+}
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct Test;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
@@ -45,7 +67,7 @@ impl frame_system::Config for Test {
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
-	type Call = Call;
+	type Call = OuterCall;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
@@ -104,22 +126,19 @@ impl Config for Test {
 	type Currency = Balances;
 	type Runner = crate::runner::stack::Runner<Self>;
 
-	type Event = ();
+	type Event = Event<Test>;
 	type Precompiles = ();
-	type BanlistChecker = ();
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type OnChargeTransaction = ();
 }
 
-type System = frame_system::Pallet<Test>;
-type Balances = pallet_balances::Pallet<Test>;
-type EVM = Pallet<Test>;
+type System = frame_system::Module<Test>;
+type Balances = pallet_balances::Module<Test>;
+type EVM = Module<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut accounts = BTreeMap::new();
 	accounts.insert(
@@ -131,7 +150,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			code: vec![
 				0x00, // STOP
 			],
-		},
+		}
 	);
 	accounts.insert(
 		H160::from_str("1000000000000000000000000000000000000002").unwrap(),
@@ -142,14 +161,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			code: vec![
 				0xff, // INVALID
 			],
-		},
+		}
 	);
 
-	pallet_balances::GenesisConfig::<Test>::default()
-		.assimilate_storage(&mut t)
-		.unwrap();
-	<GenesisConfig as GenesisBuild<Test>>::assimilate_storage(&GenesisConfig { accounts }, &mut t)
-		.unwrap();
+	pallet_balances::GenesisConfig::<Test>::default().assimilate_storage(&mut t).unwrap();
+	GenesisConfig { accounts }.assimilate_storage::<Test>(&mut t).unwrap();
 	t.into()
 }
 

@@ -31,7 +31,6 @@ mod sync;
 mod transaction;
 mod transaction_request;
 mod work;
-mod internal_transaction;
 
 pub mod pubsub;
 
@@ -49,11 +48,10 @@ pub use self::log::Log;
 pub use self::receipt::Receipt;
 pub use self::sync::{
 	SyncStatus, SyncInfo, Peers, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo,
-	TransactionStats, ChainStatus, EthProtocolInfo, PipProtocolInfo, PeerCount,
+	TransactionStats, ChainStatus, EthProtocolInfo, PipProtocolInfo,
 };
 pub use self::transaction::{
 	Transaction, RichRawTransaction, LocalTransactionStatus, PendingTransactions, PendingTransaction,
 };
 pub use self::transaction_request::TransactionRequest;
 pub use self::work::Work;
-pub use self::internal_transaction:: { InternalTransaction, RewardInfo, InternalTxDetails };

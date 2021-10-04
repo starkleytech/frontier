@@ -25,13 +25,12 @@
 
 use frame_support::{
 	decl_module, decl_storage, decl_error, decl_event,
-	traits::Get, traits::FindAuthor,
-	weights::{Pays, PostDispatchInfo, Weight},
+	traits::Get, traits::FindAuthor, weights::Weight,
 	dispatch::DispatchResultWithPostInfo,
 };
 use sp_std::prelude::*;
 use frame_system::ensure_none;
-use frame_support::ensure;
+use frame_support::{ensure, traits::UnfilteredDispatchable};
 use ethereum_types::{H160, H64, H256, U256, Bloom, BloomInput};
 use sp_runtime::{
 	transaction_validity::{
@@ -46,8 +45,6 @@ use sha3::{Digest, Keccak256};
 use codec::{Encode, Decode};
 use fp_consensus::{FRONTIER_ENGINE_ID, PostLog, PreLog};
 use fp_storage::PALLET_ETHEREUM_SCHEMA;
-
-pub use fp_evm::InternalTxDetails;
 
 pub use fp_rpc::TransactionStatus;
 pub use ethereum::{Transaction, Log, Block, Receipt, TransactionAction, TransactionMessage};
@@ -114,7 +111,7 @@ decl_storage! {
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
 			// Calculate the ethereum genesis block
-			<Module<T>>::store_block(false, U256::zero());
+			<Module<T>>::store_block(false);
 
 			// Initialize the storage schema at the well known key.
 			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
@@ -158,11 +155,6 @@ decl_module! {
 		fn on_finalize(n: T::BlockNumber) {
 			<Module<T>>::store_block(
 				fp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
-				U256::from(
-					UniqueSaturatedInto::<u128>::unique_saturated_into(
-						frame_system::Module::<T>::block_number()
-					)
-				),
 			);
 		}
 
@@ -216,30 +208,18 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				return InvalidTransaction::Stale.into();
 			}
 
-			if transaction.gas_limit > T::BlockGasLimit::get() {
-				return InvalidTransaction::ExhaustsResources.into();
-			}
-
 			let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
 			let total_payment = transaction.value.saturating_add(fee);
 			if account_data.balance < total_payment {
 				return InvalidTransaction::Payment.into();
 			}
 
-			let min_gas_price = T::FeeCalculator::min_gas_price();
-
-			if transaction.gas_price < min_gas_price {
+			if transaction.gas_price < T::FeeCalculator::min_gas_price() {
 				return InvalidTransaction::Payment.into();
 			}
 
 			let mut builder = ValidTransactionBuilder::default()
-				.and_provides((origin, transaction.nonce))
-				.priority(if min_gas_price == U256::zero() {
-						0
-					} else {
-						let target_gas = (transaction.gas_limit * transaction.gas_price) / min_gas_price;
-						T::GasWeightMapping::gas_to_weight(target_gas.unique_saturated_into())
-				});
+				.and_provides((origin, transaction.nonce));
 
 			if transaction.nonce > account_data.nonce {
 				if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
@@ -267,7 +247,7 @@ impl<T: Config> Module<T> {
 		Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
 	}
 
-	fn store_block(post_log: bool, block_number: U256) {
+	fn store_block(post_log: bool) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
@@ -293,7 +273,11 @@ impl<T: Config> Module<T> {
 			), // TODO: check receipts hash.
 			logs_bloom,
 			difficulty: U256::zero(),
-			number: block_number,
+			number: U256::from(
+				UniqueSaturatedInto::<u128>::unique_saturated_into(
+					frame_system::Module::<T>::block_number()
+				)
+			),
 			gas_limit: T::BlockGasLimit::get(),
 			gas_used: receipts.clone().into_iter().fold(U256::zero(), |acc, r| acc + r.used_gas),
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
@@ -370,7 +354,6 @@ impl<T: Config> Module<T> {
 						);
 						bloom
 					},
-					internal_transactions: info.internal_txs,
 				}, info.used_gas)
 			},
 			CallOrCreateInfo::Create(info) => {
@@ -389,7 +372,6 @@ impl<T: Config> Module<T> {
 						);
 						bloom
 					},
-					internal_transactions: info.internal_txs,
 				}, info.used_gas)
 			},
 		};
@@ -409,10 +391,7 @@ impl<T: Config> Module<T> {
 		Pending::append((transaction, status, receipt));
 
 		Self::deposit_event(Event::Executed(source, contract_address.unwrap_or_default(), transaction_hash, reason));
-		Ok(PostDispatchInfo {
-			actual_weight: Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())),
-			pays_fee: Pays::No,
-		}).into()
+		Ok(Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())).into())
 	}
 
 	/// Get the author using the FindAuthor trait.

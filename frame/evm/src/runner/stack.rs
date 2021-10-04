@@ -22,21 +22,18 @@ use sp_core::{U256, H256, H160};
 use sp_runtime::traits::UniqueSaturatedInto;
 use frame_support::{
 	ensure, traits::{Get, Currency, ExistenceRequirement},
+	storage::{StorageMap, StorageDoubleMap},
 };
 use sha3::{Keccak256, Digest};
 use fp_evm::{ExecutionInfo, CallInfo, CreateInfo, Log, Vicinity};
 use evm::{ExitReason, ExitError, Transfer};
 use evm::backend::Backend as BackendT;
 use evm::executor::{StackExecutor, StackSubstateMetadata, StackState as StackStateT};
-use fp_evm::{ InternalTxDetails, RewardInfo, };
-use hex_slice::AsHex;
 use crate::{
-	Config, AccountStorages, FeeCalculator, AccountCodes, Pallet, Event,
+	Config, AccountStorages, FeeCalculator, AccountCodes, Module, Event,
 	Error, AddressMapping, PrecompileSet, OnChargeEVMTransaction
 };
 use crate::runner::Runner as RunnerT;
-use crate::AccountConnection;
-use crate::BanlistChecker;
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
@@ -81,7 +78,7 @@ impl<T: Config> Runner<T> {
 		let total_fee = gas_price.checked_mul(U256::from(gas_limit))
 			.ok_or(Error::<T>::FeeOverflow)?;
 		let total_payment = value.checked_add(total_fee).ok_or(Error::<T>::PaymentOverflow)?;
-		let source_account = Pallet::<T>::account_basic(&source);
+		let source_account = Module::<T>::account_basic(&source);
 		ensure!(source_account.balance >= total_payment, Error::<T>::BalanceLow);
 
 		if let Some(nonce) = nonce {
@@ -109,28 +106,6 @@ impl<T: Config> Runner<T> {
 		// Refund fees to the `source` account if deducted more before,
 		T::OnChargeTransaction::correct_and_deposit_fee(&source, actual_fee, fee)?;
 
-		// distribute gas reward to smart contract deployers @ gnufoo
-		let internal_transactions = executor.call_graph.clone();
-		let dev_bonus = actual_fee.saturating_mul(U256::from(4)).checked_div(U256::from(10));
-		let mut total_gas = U256::zero();
-		for item in &internal_transactions {
-			total_gas = total_gas.saturating_add(item.gas_used);
-		}
-
-		let tx_details = internal_transactions.into_iter().map(|tx| {
-			let reward = AccountConnection::<T>::get(tx.node).and_then(|candidate| {
-				let amount = dev_bonus.unwrap_or(U256::zero()).saturating_mul(tx.gas_used).checked_div(total_gas);
-				 amount.map(|amount| {
-				    Pallet::<T>::deposit_fee(&candidate, amount);
-					RewardInfo { developer: candidate, reward: amount, }
-				})
-			});
-
-			InternalTxDetails {
-				tx, reward,
-			}
-		}).collect();
-
 		let state = executor.into_state();
 
 		for address in state.substate.deletes {
@@ -139,7 +114,7 @@ impl<T: Config> Runner<T> {
 				"Deleting account at {:?}",
 				address
 			);
-			Pallet::<T>::remove_account(&address)
+			Module::<T>::remove_account(&address)
 		}
 
 		for log in &state.substate.logs {
@@ -152,7 +127,7 @@ impl<T: Config> Runner<T> {
 				log.data.len(),
 				log.data
 			);
-			Pallet::<T>::deposit_event(Event::<T>::Log(Log {
+			Module::<T>::deposit_event(Event::<T>::Log(Log {
 				address: log.address,
 				topics: log.topics.clone(),
 				data: log.data.clone(),
@@ -164,7 +139,6 @@ impl<T: Config> Runner<T> {
 			exit_reason: reason,
 			used_gas,
 			logs: state.substate.logs,
-			internal_txs: tx_details,
 		})
 	}
 }
@@ -219,9 +193,6 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 				let address = executor.create_address(
 					evm::CreateScheme::Legacy { caller: source },
 				);
-				// debug::info!("STARKLEY EVM CREATE [deployer: {:?}, address: {:?}, code: {:02x}]", source, address, init.as_hex());
-				AccountConnection::<T>::insert(address, Some(source));
-
 				(executor.transact_create(
 					source,
 					value,
@@ -377,12 +348,12 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 			H256::default()
 		} else {
 			let number = T::BlockNumber::from(number.as_u32());
-			H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
+			H256::from_slice(frame_system::Module::<T>::block_hash(number).as_ref())
 		}
 	}
 
 	fn block_number(&self) -> U256 {
-		let number: u128 = frame_system::Pallet::<T>::block_number().unique_saturated_into();
+		let number: u128 = frame_system::Module::<T>::block_number().unique_saturated_into();
 		U256::from(number)
 	}
 
@@ -391,7 +362,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn block_timestamp(&self) -> U256 {
-		let now: u128 = pallet_timestamp::Pallet::<T>::get().unique_saturated_into();
+		let now: u128 = pallet_timestamp::Module::<T>::get().unique_saturated_into();
 		U256::from(now / 1000)
 	}
 
@@ -412,7 +383,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
-		let account = Pallet::<T>::account_basic(&address);
+		let account = Module::<T>::account_basic(&address);
 
 		evm::backend::Basic {
 			balance: account.balance,
@@ -421,23 +392,15 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn code(&self, address: H160) -> Vec<u8> {
-		<AccountCodes<T>>::get(&address)
+		AccountCodes::get(&address)
 	}
 
 	fn storage(&self, address: H160, index: H256) -> H256 {
-		<AccountStorages<T>>::get(address, index)
+		AccountStorages::get(address, index)
 	}
 
 	fn original_storage(&self, _address: H160, _index: H256) -> Option<H256> {
 		None
-	}
-
-	fn code_in_banlist(&self, address: H160) -> bool {
-		T::BanlistChecker::is_banned(&address)
-	}
-
-	fn banlist_call_gas(&self) -> u64 {
-		T::BanlistChecker::banned_gas_fee()
 	}
 }
 
@@ -467,7 +430,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config> for SubstrateStackState
 	}
 
 	fn is_empty(&self, address: H160) -> bool {
-		Pallet::<T>::is_account_empty(&address)
+		Module::<T>::is_account_empty(&address)
 	}
 
 	fn deleted(&self, address: H160) -> bool {
@@ -476,7 +439,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config> for SubstrateStackState
 
 	fn inc_nonce(&mut self, address: H160) {
 		let account_id = T::AddressMapping::into_account_id(address);
-		frame_system::Pallet::<T>::inc_account_nonce(&account_id);
+		frame_system::Module::<T>::inc_account_nonce(&account_id);
 	}
 
 	fn set_storage(&mut self, address: H160, index: H256, value: H256) {
@@ -487,7 +450,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config> for SubstrateStackState
 				address,
 				index,
 			);
-			<AccountStorages<T>>::remove(address, index);
+			AccountStorages::remove(address, index);
 		} else {
 			log::debug!(
 				target: "evm",
@@ -496,12 +459,12 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config> for SubstrateStackState
 				index,
 				value,
 			);
-			<AccountStorages<T>>::insert(address, index, value);
+			AccountStorages::insert(address, index, value);
 		}
 	}
 
 	fn reset_storage(&mut self, address: H160) {
-		<AccountStorages<T>>::remove_prefix(address);
+		AccountStorages::remove_prefix(address);
 	}
 
 	fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) {
@@ -519,7 +482,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config> for SubstrateStackState
 			code.len(),
 			address
 		);
-		Pallet::<T>::create_account(address, code);
+		Module::<T>::create_account(address, code);
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
