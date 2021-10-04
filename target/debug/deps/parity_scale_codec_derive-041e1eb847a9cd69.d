@@ -1,9 +1,0 @@
-/home/dubs/frontier-work/frontier-starkley/target/debug/deps/libparity_scale_codec_derive-041e1eb847a9cd69.so: /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/lib.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/decode.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/encode.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/utils.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/trait_bounds.rs
-
-/home/dubs/frontier-work/frontier-starkley/target/debug/deps/parity_scale_codec_derive-041e1eb847a9cd69.d: /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/lib.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/decode.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/encode.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/utils.rs /home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/trait_bounds.rs
-
-/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/lib.rs:
-/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/decode.rs:
-/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/encode.rs:
-/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/utils.rs:
-/home/dubs/.cargo/registry/src/github.com-1ecc6299db9ec823/parity-scale-codec-derive-2.1.0/src/trait_bounds.rs:
