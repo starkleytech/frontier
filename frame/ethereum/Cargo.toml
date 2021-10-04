@@ -25,9 +25,9 @@ ethereum-types = { version = "0.11", default-features = false }
 rlp = { version = "0.5", default-features = false }
 sha3 = { version = "0.8", default-features = false }
 libsecp256k1 = { version = "0.3", default-features = false }
-fp-consensus = { version = "1.0.1-clover", path = "../../primitives/consensus", default-features = false }
-fp-rpc = { version = "2.0.0-clover", path = "../../primitives/rpc", default-features = false }
-fp-storage = { version = "1.0.1-clover", path = "../../primitives/storage", default-features = false}
+fp-consensus = { version = "1.0.1-starkley", path = "../../primitives/consensus", default-features = false }
+fp-rpc = { version = "2.0.0-starkley", path = "../../primitives/rpc", default-features = false }
+fp-storage = { version = "1.0.1-starkley", path = "../../primitives/storage", default-features = false}
 
 [dev-dependencies]
 sp-core = {  git = "https://github.com/paritytech/substrate.git", tag = "v3.0.0" }

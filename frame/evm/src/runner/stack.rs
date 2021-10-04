@@ -219,7 +219,7 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 				let address = executor.create_address(
 					evm::CreateScheme::Legacy { caller: source },
 				);
-				// debug::info!("CLOVER EVM CREATE [deployer: {:?}, address: {:?}, code: {:02x}]", source, address, init.as_hex());
+				// debug::info!("STARKLEY EVM CREATE [deployer: {:?}, address: {:?}, code: {:02x}]", source, address, init.as_hex());
 				AccountConnection::<T>::insert(address, Some(source));
 
 				(executor.transact_create(
