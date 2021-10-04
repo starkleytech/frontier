@@ -1,3 +1,6 @@
+# Used Version for this starkley 1.0.0 branch:
+https://github.com/paritytech/frontier/releases/tag/pallet-evm-v3.0.0 
+
 # Frontier
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/paritytech/frontier/Rust)](https://github.com/paritytech/frontier/actions)
