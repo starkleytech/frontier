@@ -28,7 +28,7 @@ use sp_std::vec::Vec;
 use sp_core::{U256, H160};
 use evm::ExitReason;
 
-pub use evm::backend::{Basic as Account, Log, InternalTransaction, };
+pub use evm::backend::{Basic as Account, Log };
 pub use precompile::{Precompile, PrecompileSet, LinearCostPrecompile};
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default)]
