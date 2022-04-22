@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // This file is part of Frontier.
 //
-// Copyright (c) 2020-2022 Parity Technologies (UK) Ltd.
+// Copyright (c) 2020 Parity Technologies (UK) Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ use super::*;
 benchmarks! {
 
 	runner_execute {
-	// This benchmark tests the relationship between gas and weight. It deploys a contract which
-	// has an infinite loop in a public function. We then call this function with varying amounts
-	// of gas, expecting it to OOG. The benchmarking framework measures the amount of time (aka
-	// weight) it takes before OOGing and relates that to the amount of gas provided, leaving us
-	// with an estimate for gas-to-weight mapping.
+		// This benchmark tests the relationship between gas and weight. It deploys a contract which
+		// has an infinite loop in a public function. We then call this function with varying amounts
+		// of gas, expecting it to OOG. The benchmarking framework measures the amount of time (aka
+		// weight) it takes before OOGing and relates that to the amount of gas provided, leaving us
+		// with an estimate for gas-to-weight mapping.
 
 		let x in 1..10000000;
 
@@ -76,6 +76,7 @@ benchmarks! {
 
 		let value = U256::default();
 		let gas_limit_create: u64 = 1_250_000 * 1_000_000_000;
+		let is_transactional = true;
 		let create_runner_results = T::Runner::create(
 			caller,
 			contract_bytecode,
@@ -85,6 +86,7 @@ benchmarks! {
 			None,
 			Some(nonce_as_u256),
 			Vec::new(),
+			is_transactional,
 			T::config(),
 		);
 		assert_eq!(create_runner_results.is_ok(), true, "create() failed");
@@ -106,6 +108,7 @@ benchmarks! {
 		nonce = nonce + 1;
 		let nonce_as_u256: U256 = nonce.into();
 
+		let is_transactional = true;
 		let call_runner_results = T::Runner::call(
 			caller,
 			contract_address,
@@ -116,9 +119,48 @@ benchmarks! {
 			None,
 			Some(nonce_as_u256),
 			Vec::new(),
+			is_transactional,
 			T::config(),
 		);
 		assert_eq!(call_runner_results.is_ok(), true, "call() failed");
+	}
+
+
+	hotfix_inc_account_sufficients {
+		// This benchmark tests the resource utilization by hotfixing N number of accounts
+		// by incrementing their `sufficients` if `nonce` is > 0.
+
+		let n in 0 .. 1000;
+
+		use frame_benchmarking::{vec, whitelisted_caller};
+		use sp_core::H160;
+		use frame_system::RawOrigin;
+
+		// The caller account is whitelisted for DB reads/write by the benchmarking macro.
+		let caller: T::AccountId = whitelisted_caller();
+		let addresses = (0..n as u64)
+							.map(H160::from_low_u64_le)
+							.collect::<Vec<H160>>();
+		let accounts = addresses
+			.iter()
+			.cloned()
+			.map(|addr| {
+				<crate::AccountCodes<T>>::insert(addr, &vec![0]);
+				let account_id = T::AddressMapping::into_account_id(addr);
+				frame_system::Pallet::<T>::inc_account_nonce(&account_id);
+				assert_eq!(frame_system::Pallet::<T>::sufficients(&account_id), 0);
+
+				account_id
+			})
+			.collect::<Vec<_>>();
+
+	}: _(RawOrigin::Signed(caller), addresses)
+	verify {
+		accounts
+			.iter()
+			.for_each(|id| {
+				assert_eq!(frame_system::Pallet::<T>::sufficients(&id), 1);
+			});
 	}
 }
 

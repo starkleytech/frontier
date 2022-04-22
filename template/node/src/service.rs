@@ -263,7 +263,7 @@ pub fn new_partial(
 						);
 
 					let dynamic_fee =
-						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+						pallet_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
 					Ok((timestamp, slot, dynamic_fee))
 				},
@@ -370,7 +370,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 		})?;
 
 	// Channel for the rpc handler to communicate with the authorship task.
-	let (command_sink, commands_stream) = futures::channel::mpsc::channel(1000);
+	let (command_sink, _commands_stream) = futures::channel::mpsc::channel(1000);
 
 	if config.offchain_worker.enabled {
 		sc_service::build_offchain_workers(
@@ -394,11 +394,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 	let overrides = crate::rpc::overrides_handle(client.clone());
 	let fee_history_limit = cli.run.fee_history_limit;
 
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
 		50,
 		50,
+		prometheus_registry.clone(),
 	));
 
 	let rpc_extensions_builder = {
@@ -525,9 +526,9 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 							create_inherent_data_providers: move |_, ()| async move {
 								let mock_timestamp = MockTimestampInherentDataProvider;
 
-								let dynamic_fee = fp_dynamic_fee::InherentDataProvider(U256::from(
-									target_gas_price,
-								));
+								let dynamic_fee = pallet_dynamic_fee::InherentDataProvider(
+									U256::from(target_gas_price),
+								);
 
 								Ok((mock_timestamp, dynamic_fee))
 							},
@@ -551,9 +552,9 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 							create_inherent_data_providers: move |_, ()| async move {
 								let mock_timestamp = MockTimestampInherentDataProvider;
 
-								let dynamic_fee = fp_dynamic_fee::InherentDataProvider(U256::from(
-									target_gas_price,
-								));
+								let dynamic_fee = pallet_dynamic_fee::InherentDataProvider(
+									U256::from(target_gas_price),
+								);
 
 								Ok((mock_timestamp, dynamic_fee))
 							},
@@ -606,7 +607,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 							);
 
 						let dynamic_fee =
-							fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+							pallet_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
 						Ok((timestamp, slot, dynamic_fee))
 					},

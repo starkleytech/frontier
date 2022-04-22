@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // This file is part of Frontier.
 //
-// Copyright (c) 2020-2022 Parity Technologies (UK) Ltd.
+// Copyright (c) 2020 Parity Technologies (UK) Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -168,6 +168,7 @@ impl pallet_evm::Config for Test {
 	type OnChargeTransaction = ();
 	type FindAuthor = FindAuthorTruncated;
 	type BlockHashMapping = crate::EthereumBlockHashMapping<Self>;
+	type WeightInfo = ();
 }
 
 impl crate::Config for Test {
@@ -361,7 +362,7 @@ impl EIP2930UnsignedTransaction {
 		};
 		let chain_id = chain_id.unwrap_or(ChainId::get());
 		let msg = ethereum::EIP2930TransactionMessage {
-			chain_id,
+			chain_id: chain_id,
 			nonce: self.nonce,
 			gas_price: self.gas_price,
 			gas_limit: self.gas_limit,
